@@ -24,6 +24,7 @@ variables:
 stages:
     - build
     - test
+    - lint
     - scan
     - publish
 
@@ -83,6 +84,26 @@ stages:
         coverage_report: # used for visualization only
           coverage_format: cobertura
           path: .dist/go-test-github-com-cidverse-test-library-go-mod/report/cobertura/*.xml
+## golangci-lint [github.com/cidverse/test-library-go-mod]
+"nightly/golangci-lint [github.com/cidverse/test-library-go-mod]":
+    <<: *default_job
+    stage: lint
+    needs: []
+    dependencies: []
+    timeout: 10m
+    rules:
+      - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_PIPELINE_SCHEDULE_DESCRIPTION == "nightly"'
+        when: always
+      - when: never
+    script:
+        - cid --log-level=${CID_LOGLEVEL:-info} plan execute --state-file ".cid/state-gitlab.json" --state-wf-name "nightly" --step "golangci-lint-github-com-cidverse-test-library-go-mod"
+    artifacts:
+      name: "nightly/golangci-lint [github.com/cidverse/test-library-go-mod]"
+      paths:
+        - .dist/golangci-lint-github-com-cidverse-test-library-go-mod/
+      expire_in: 1 day
+      reports:
+        codequality: .dist/golangci-lint-github-com-cidverse-test-library-go-mod/report/gl-codequality/*.json
 ## gitleaks-scan
 "nightly/gitleaks-scan":
     <<: *default_job
@@ -161,6 +182,8 @@ stages:
       paths:
         - .dist/zizmor-scan/
       expire_in: 1 day
+      reports:
+        codequality: .dist/zizmor-scan/report/gl-codequality/*.json
 
 # Pull Request
 ## go-build [github.com/cidverse/test-library-go-mod]
@@ -205,6 +228,26 @@ stages:
         coverage_report: # used for visualization only
           coverage_format: cobertura
           path: .dist/go-test-github-com-cidverse-test-library-go-mod/report/cobertura/*.xml
+## golangci-lint [github.com/cidverse/test-library-go-mod]
+"pull-request/golangci-lint [github.com/cidverse/test-library-go-mod]":
+    <<: *default_job
+    stage: lint
+    needs: []
+    dependencies: []
+    timeout: 10m
+    rules:
+      - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+        when: always
+      - when: never
+    script:
+        - cid --log-level=${CID_LOGLEVEL:-info} plan execute --state-file ".cid/state-gitlab.json" --state-wf-name "pull-request" --step "golangci-lint-github-com-cidverse-test-library-go-mod"
+    artifacts:
+      name: "pull-request/golangci-lint [github.com/cidverse/test-library-go-mod]"
+      paths:
+        - .dist/golangci-lint-github-com-cidverse-test-library-go-mod/
+      expire_in: 1 day
+      reports:
+        codequality: .dist/golangci-lint-github-com-cidverse-test-library-go-mod/report/gl-codequality/*.json
 ## gitleaks-scan
 "pull-request/gitleaks-scan":
     <<: *default_job
@@ -283,6 +326,8 @@ stages:
       paths:
         - .dist/zizmor-scan/
       expire_in: 1 day
+      reports:
+        codequality: .dist/zizmor-scan/report/gl-codequality/*.json
 
 # Release
 ## go-build [github.com/cidverse/test-library-go-mod]
@@ -327,6 +372,26 @@ stages:
         coverage_report: # used for visualization only
           coverage_format: cobertura
           path: .dist/go-test-github-com-cidverse-test-library-go-mod/report/cobertura/*.xml
+## golangci-lint [github.com/cidverse/test-library-go-mod]
+"release/golangci-lint [github.com/cidverse/test-library-go-mod]":
+    <<: *default_job
+    stage: lint
+    needs: []
+    dependencies: []
+    timeout: 10m
+    rules:
+      - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG =~ /^v[0-9]+.[0-9]+.[0-9]+$/'
+        when: always
+      - when: never
+    script:
+        - cid --log-level=${CID_LOGLEVEL:-info} plan execute --state-file ".cid/state-gitlab.json" --state-wf-name "release" --step "golangci-lint-github-com-cidverse-test-library-go-mod"
+    artifacts:
+      name: "release/golangci-lint [github.com/cidverse/test-library-go-mod]"
+      paths:
+        - .dist/golangci-lint-github-com-cidverse-test-library-go-mod/
+      expire_in: 1 day
+      reports:
+        codequality: .dist/golangci-lint-github-com-cidverse-test-library-go-mod/report/gl-codequality/*.json
 ## gitleaks-scan
 "release/gitleaks-scan":
     <<: *default_job
@@ -405,11 +470,13 @@ stages:
       paths:
         - .dist/zizmor-scan/
       expire_in: 1 day
+      reports:
+        codequality: .dist/zizmor-scan/report/gl-codequality/*.json
 ## changelog-generate
 "release/changelog-generate":
     <<: *default_job
     stage: publish
-    needs: ["release/gitleaks-scan", "release/go-build [github.com/cidverse/test-library-go-mod]", "release/go-test [github.com/cidverse/test-library-go-mod]", "release/semgrep-scan", "release/trivyfs-scan", "release/zizmor-scan"]
+    needs: ["release/gitleaks-scan", "release/go-build [github.com/cidverse/test-library-go-mod]", "release/go-test [github.com/cidverse/test-library-go-mod]", "release/golangci-lint [github.com/cidverse/test-library-go-mod]", "release/semgrep-scan", "release/trivyfs-scan", "release/zizmor-scan"]
     dependencies: []
     timeout: 10m
     rules:
@@ -427,7 +494,7 @@ stages:
 "release/gitlab-release-publish":
     <<: *default_job
     stage: publish
-    needs: ["release/changelog-generate", "release/gitleaks-scan", "release/go-build [github.com/cidverse/test-library-go-mod]", "release/go-test [github.com/cidverse/test-library-go-mod]", "release/semgrep-scan", "release/trivyfs-scan", "release/zizmor-scan"]
+    needs: ["release/changelog-generate", "release/gitleaks-scan", "release/go-build [github.com/cidverse/test-library-go-mod]", "release/go-test [github.com/cidverse/test-library-go-mod]", "release/golangci-lint [github.com/cidverse/test-library-go-mod]", "release/semgrep-scan", "release/trivyfs-scan", "release/zizmor-scan"]
     dependencies: ["release/changelog-generate", "release/go-build [github.com/cidverse/test-library-go-mod]"]
     timeout: 10m
     rules:
@@ -485,6 +552,26 @@ stages:
         coverage_report: # used for visualization only
           coverage_format: cobertura
           path: .dist/go-test-github-com-cidverse-test-library-go-mod/report/cobertura/*.xml
+## golangci-lint [github.com/cidverse/test-library-go-mod]
+"main/golangci-lint [github.com/cidverse/test-library-go-mod]":
+    <<: *default_job
+    stage: lint
+    needs: []
+    dependencies: []
+    timeout: 10m
+    rules:
+      - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "main"'
+        when: always
+      - when: never
+    script:
+        - cid --log-level=${CID_LOGLEVEL:-info} plan execute --state-file ".cid/state-gitlab.json" --state-wf-name "main" --step "golangci-lint-github-com-cidverse-test-library-go-mod"
+    artifacts:
+      name: "main/golangci-lint [github.com/cidverse/test-library-go-mod]"
+      paths:
+        - .dist/golangci-lint-github-com-cidverse-test-library-go-mod/
+      expire_in: 1 day
+      reports:
+        codequality: .dist/golangci-lint-github-com-cidverse-test-library-go-mod/report/gl-codequality/*.json
 ## gitleaks-scan
 "main/gitleaks-scan":
     <<: *default_job
@@ -563,3 +650,5 @@ stages:
       paths:
         - .dist/zizmor-scan/
       expire_in: 1 day
+      reports:
+        codequality: .dist/zizmor-scan/report/gl-codequality/*.json
