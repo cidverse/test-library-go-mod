@@ -19,6 +19,7 @@
         "stages": [
           "build",
           "test",
+          "lint",
           "scan"
         ],
         "steps": [
@@ -28,7 +29,7 @@
             "slug": "go-build-github-com-cidverse-test-library-go-mod",
             "stage": "build",
             "scope": "module",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+go-build",
+            "action": "builtin://actions/go-build",
             "module": "gomod-go-mod",
             "access": {
               "executables": [
@@ -89,7 +90,7 @@
             "slug": "go-test-github-com-cidverse-test-library-go-mod",
             "stage": "test",
             "scope": "module",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+go-test",
+            "action": "builtin://actions/go-test",
             "module": "gomod-go-mod",
             "access": {
               "executables": [
@@ -163,15 +164,16 @@
           },
           {
             "id": "2",
-            "name": "gitleaks-scan",
-            "slug": "gitleaks-scan",
-            "stage": "scan",
-            "scope": "project",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+gitleaks-scan",
+            "name": "go-lint [github.com/cidverse/test-library-go-mod]",
+            "slug": "go-lint-github-com-cidverse-test-library-go-mod",
+            "stage": "lint",
+            "scope": "module",
+            "action": "builtin://actions/go-lint",
+            "module": "gomod-go-mod",
             "access": {
               "executables": [
                 {
-                  "name": "gitleaks",
+                  "name": "golangci-lint",
                   "constraint": "\u003e= 0.0.0-0"
                 },
                 {
@@ -223,11 +225,71 @@
           },
           {
             "id": "3",
+            "name": "gitleaks-scan",
+            "slug": "gitleaks-scan",
+            "stage": "scan",
+            "scope": "project",
+            "action": "builtin://actions/gitleaks-scan",
+            "access": {
+              "executables": [
+                {
+                  "name": "gitleaks",
+                  "constraint": "\u003e= 0.0.0-0"
+                },
+                {
+                  "name": "gitlab-sarif-converter",
+                  "constraint": "\u003e= 0.0.0-0"
+                }
+              ],
+              "network": [
+                {
+                  "host": "github.com:443"
+                },
+                {
+                  "host": "api.github.com:443"
+                },
+                {
+                  "host": "codeload.github.com:443"
+                },
+                {
+                  "host": "uploads.github.com:443"
+                },
+                {
+                  "host": "objects.githubusercontent.com:443"
+                },
+                {
+                  "host": "raw.githubusercontent.com:443"
+                },
+                {
+                  "host": "ghcr.io:443"
+                },
+                {
+                  "host": "pkg-containers.githubusercontent.com:443"
+                }
+              ]
+            },
+            "inputs": {},
+            "outputs": {
+              "artifacts": [
+                {
+                  "type": "report",
+                  "format": "sarif"
+                },
+                {
+                  "type": "report",
+                  "format": "gl-codequality"
+                }
+              ]
+            },
+            "order": 3
+          },
+          {
+            "id": "4",
             "name": "semgrep-scan",
             "slug": "semgrep-scan",
             "stage": "scan",
             "scope": "project",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+semgrep-scan",
+            "action": "builtin://actions/semgrep-scan",
             "access": {
               "env": [
                 {
@@ -293,15 +355,15 @@
                 }
               ]
             },
-            "order": 3
+            "order": 4
           },
           {
-            "id": "4",
+            "id": "5",
             "name": "trivyfs-scan",
             "slug": "trivyfs-scan",
             "stage": "scan",
             "scope": "project",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+trivyfs-scan",
+            "action": "builtin://actions/trivyfs-scan",
             "access": {
               "executables": [
                 {
@@ -356,36 +418,36 @@
                 }
               ]
             },
-            "order": 4
+            "order": 5
           },
           {
-            "id": "5",
-            "name": "github-sarif-upload",
-            "slug": "github-sarif-upload",
+            "id": "6",
+            "name": "zizmor-scan",
+            "slug": "zizmor-scan",
             "stage": "scan",
             "scope": "project",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+github-sarif-upload",
-            "run-after": [
-              "gitleaks-scan",
-              "semgrep-scan",
-              "trivyfs-scan"
-            ],
-            "run-after-by-name": [
-              "gitleaks-scan",
-              "semgrep-scan",
-              "trivyfs-scan"
-            ],
-            "uses-output-of": [
-              "gitleaks-scan",
-              "semgrep-scan",
-              "trivyfs-scan"
-            ],
-            "uses-output-of-by-name": [
-              "gitleaks-scan",
-              "semgrep-scan",
-              "trivyfs-scan"
-            ],
+            "action": "builtin://actions/zizmor-scan",
             "access": {
+              "env": [
+                {
+                  "name": "GH_HOSTNAME",
+                  "description": "GH_HOSTNAME is required for some online audits"
+                },
+                {
+                  "name": "GH_TOKEN",
+                  "description": "GH_TOKEN is required for some online audits"
+                }
+              ],
+              "executables": [
+                {
+                  "name": "zizmor",
+                  "constraint": "=\u003e 1.4.1"
+                },
+                {
+                  "name": "gitlab-sarif-converter",
+                  "constraint": "\u003e= 0.0.0-0"
+                }
+              ],
               "network": [
                 {
                   "host": "github.com:443"
@@ -413,16 +475,20 @@
                 }
               ]
             },
-            "inputs": {
+            "inputs": {},
+            "outputs": {
               "artifacts": [
                 {
                   "type": "report",
                   "format": "sarif"
+                },
+                {
+                  "type": "report",
+                  "format": "gl-codequality"
                 }
               ]
             },
-            "outputs": {},
-            "order": 5
+            "order": 6
           }
         ]
       },
@@ -490,6 +556,7 @@
         "stages": [
           "build",
           "test",
+          "lint",
           "scan"
         ],
         "steps": [
@@ -499,7 +566,7 @@
             "slug": "go-build-github-com-cidverse-test-library-go-mod",
             "stage": "build",
             "scope": "module",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+go-build",
+            "action": "builtin://actions/go-build",
             "module": "gomod-go-mod",
             "access": {
               "executables": [
@@ -560,7 +627,7 @@
             "slug": "go-test-github-com-cidverse-test-library-go-mod",
             "stage": "test",
             "scope": "module",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+go-test",
+            "action": "builtin://actions/go-test",
             "module": "gomod-go-mod",
             "access": {
               "executables": [
@@ -634,15 +701,16 @@
           },
           {
             "id": "2",
-            "name": "gitleaks-scan",
-            "slug": "gitleaks-scan",
-            "stage": "scan",
-            "scope": "project",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+gitleaks-scan",
+            "name": "go-lint [github.com/cidverse/test-library-go-mod]",
+            "slug": "go-lint-github-com-cidverse-test-library-go-mod",
+            "stage": "lint",
+            "scope": "module",
+            "action": "builtin://actions/go-lint",
+            "module": "gomod-go-mod",
             "access": {
               "executables": [
                 {
-                  "name": "gitleaks",
+                  "name": "golangci-lint",
                   "constraint": "\u003e= 0.0.0-0"
                 },
                 {
@@ -694,11 +762,71 @@
           },
           {
             "id": "3",
+            "name": "gitleaks-scan",
+            "slug": "gitleaks-scan",
+            "stage": "scan",
+            "scope": "project",
+            "action": "builtin://actions/gitleaks-scan",
+            "access": {
+              "executables": [
+                {
+                  "name": "gitleaks",
+                  "constraint": "\u003e= 0.0.0-0"
+                },
+                {
+                  "name": "gitlab-sarif-converter",
+                  "constraint": "\u003e= 0.0.0-0"
+                }
+              ],
+              "network": [
+                {
+                  "host": "github.com:443"
+                },
+                {
+                  "host": "api.github.com:443"
+                },
+                {
+                  "host": "codeload.github.com:443"
+                },
+                {
+                  "host": "uploads.github.com:443"
+                },
+                {
+                  "host": "objects.githubusercontent.com:443"
+                },
+                {
+                  "host": "raw.githubusercontent.com:443"
+                },
+                {
+                  "host": "ghcr.io:443"
+                },
+                {
+                  "host": "pkg-containers.githubusercontent.com:443"
+                }
+              ]
+            },
+            "inputs": {},
+            "outputs": {
+              "artifacts": [
+                {
+                  "type": "report",
+                  "format": "sarif"
+                },
+                {
+                  "type": "report",
+                  "format": "gl-codequality"
+                }
+              ]
+            },
+            "order": 3
+          },
+          {
+            "id": "4",
             "name": "semgrep-scan",
             "slug": "semgrep-scan",
             "stage": "scan",
             "scope": "project",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+semgrep-scan",
+            "action": "builtin://actions/semgrep-scan",
             "access": {
               "env": [
                 {
@@ -764,15 +892,15 @@
                 }
               ]
             },
-            "order": 3
+            "order": 4
           },
           {
-            "id": "4",
+            "id": "5",
             "name": "trivyfs-scan",
             "slug": "trivyfs-scan",
             "stage": "scan",
             "scope": "project",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+trivyfs-scan",
+            "action": "builtin://actions/trivyfs-scan",
             "access": {
               "executables": [
                 {
@@ -827,36 +955,36 @@
                 }
               ]
             },
-            "order": 4
+            "order": 5
           },
           {
-            "id": "5",
-            "name": "github-sarif-upload",
-            "slug": "github-sarif-upload",
+            "id": "6",
+            "name": "zizmor-scan",
+            "slug": "zizmor-scan",
             "stage": "scan",
             "scope": "project",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+github-sarif-upload",
-            "run-after": [
-              "gitleaks-scan",
-              "semgrep-scan",
-              "trivyfs-scan"
-            ],
-            "run-after-by-name": [
-              "gitleaks-scan",
-              "semgrep-scan",
-              "trivyfs-scan"
-            ],
-            "uses-output-of": [
-              "gitleaks-scan",
-              "semgrep-scan",
-              "trivyfs-scan"
-            ],
-            "uses-output-of-by-name": [
-              "gitleaks-scan",
-              "semgrep-scan",
-              "trivyfs-scan"
-            ],
+            "action": "builtin://actions/zizmor-scan",
             "access": {
+              "env": [
+                {
+                  "name": "GH_HOSTNAME",
+                  "description": "GH_HOSTNAME is required for some online audits"
+                },
+                {
+                  "name": "GH_TOKEN",
+                  "description": "GH_TOKEN is required for some online audits"
+                }
+              ],
+              "executables": [
+                {
+                  "name": "zizmor",
+                  "constraint": "=\u003e 1.4.1"
+                },
+                {
+                  "name": "gitlab-sarif-converter",
+                  "constraint": "\u003e= 0.0.0-0"
+                }
+              ],
               "network": [
                 {
                   "host": "github.com:443"
@@ -884,16 +1012,20 @@
                 }
               ]
             },
-            "inputs": {
+            "inputs": {},
+            "outputs": {
               "artifacts": [
                 {
                   "type": "report",
                   "format": "sarif"
+                },
+                {
+                  "type": "report",
+                  "format": "gl-codequality"
                 }
               ]
             },
-            "outputs": {},
-            "order": 5
+            "order": 6
           }
         ]
       },
@@ -965,6 +1097,7 @@
         "stages": [
           "build",
           "test",
+          "lint",
           "scan",
           "publish"
         ],
@@ -975,7 +1108,7 @@
             "slug": "go-build-github-com-cidverse-test-library-go-mod",
             "stage": "build",
             "scope": "module",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+go-build",
+            "action": "builtin://actions/go-build",
             "module": "gomod-go-mod",
             "access": {
               "executables": [
@@ -1036,7 +1169,7 @@
             "slug": "go-test-github-com-cidverse-test-library-go-mod",
             "stage": "test",
             "scope": "module",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+go-test",
+            "action": "builtin://actions/go-test",
             "module": "gomod-go-mod",
             "access": {
               "executables": [
@@ -1110,15 +1243,16 @@
           },
           {
             "id": "2",
-            "name": "gitleaks-scan",
-            "slug": "gitleaks-scan",
-            "stage": "scan",
-            "scope": "project",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+gitleaks-scan",
+            "name": "go-lint [github.com/cidverse/test-library-go-mod]",
+            "slug": "go-lint-github-com-cidverse-test-library-go-mod",
+            "stage": "lint",
+            "scope": "module",
+            "action": "builtin://actions/go-lint",
+            "module": "gomod-go-mod",
             "access": {
               "executables": [
                 {
-                  "name": "gitleaks",
+                  "name": "golangci-lint",
                   "constraint": "\u003e= 0.0.0-0"
                 },
                 {
@@ -1170,11 +1304,71 @@
           },
           {
             "id": "3",
+            "name": "gitleaks-scan",
+            "slug": "gitleaks-scan",
+            "stage": "scan",
+            "scope": "project",
+            "action": "builtin://actions/gitleaks-scan",
+            "access": {
+              "executables": [
+                {
+                  "name": "gitleaks",
+                  "constraint": "\u003e= 0.0.0-0"
+                },
+                {
+                  "name": "gitlab-sarif-converter",
+                  "constraint": "\u003e= 0.0.0-0"
+                }
+              ],
+              "network": [
+                {
+                  "host": "github.com:443"
+                },
+                {
+                  "host": "api.github.com:443"
+                },
+                {
+                  "host": "codeload.github.com:443"
+                },
+                {
+                  "host": "uploads.github.com:443"
+                },
+                {
+                  "host": "objects.githubusercontent.com:443"
+                },
+                {
+                  "host": "raw.githubusercontent.com:443"
+                },
+                {
+                  "host": "ghcr.io:443"
+                },
+                {
+                  "host": "pkg-containers.githubusercontent.com:443"
+                }
+              ]
+            },
+            "inputs": {},
+            "outputs": {
+              "artifacts": [
+                {
+                  "type": "report",
+                  "format": "sarif"
+                },
+                {
+                  "type": "report",
+                  "format": "gl-codequality"
+                }
+              ]
+            },
+            "order": 3
+          },
+          {
+            "id": "4",
             "name": "semgrep-scan",
             "slug": "semgrep-scan",
             "stage": "scan",
             "scope": "project",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+semgrep-scan",
+            "action": "builtin://actions/semgrep-scan",
             "access": {
               "env": [
                 {
@@ -1240,15 +1434,15 @@
                 }
               ]
             },
-            "order": 3
+            "order": 4
           },
           {
-            "id": "4",
+            "id": "5",
             "name": "trivyfs-scan",
             "slug": "trivyfs-scan",
             "stage": "scan",
             "scope": "project",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+trivyfs-scan",
+            "action": "builtin://actions/trivyfs-scan",
             "access": {
               "executables": [
                 {
@@ -1303,36 +1497,36 @@
                 }
               ]
             },
-            "order": 4
+            "order": 5
           },
           {
-            "id": "5",
-            "name": "github-sarif-upload",
-            "slug": "github-sarif-upload",
+            "id": "6",
+            "name": "zizmor-scan",
+            "slug": "zizmor-scan",
             "stage": "scan",
             "scope": "project",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+github-sarif-upload",
-            "run-after": [
-              "gitleaks-scan",
-              "semgrep-scan",
-              "trivyfs-scan"
-            ],
-            "run-after-by-name": [
-              "gitleaks-scan",
-              "semgrep-scan",
-              "trivyfs-scan"
-            ],
-            "uses-output-of": [
-              "gitleaks-scan",
-              "semgrep-scan",
-              "trivyfs-scan"
-            ],
-            "uses-output-of-by-name": [
-              "gitleaks-scan",
-              "semgrep-scan",
-              "trivyfs-scan"
-            ],
+            "action": "builtin://actions/zizmor-scan",
             "access": {
+              "env": [
+                {
+                  "name": "GH_HOSTNAME",
+                  "description": "GH_HOSTNAME is required for some online audits"
+                },
+                {
+                  "name": "GH_TOKEN",
+                  "description": "GH_TOKEN is required for some online audits"
+                }
+              ],
+              "executables": [
+                {
+                  "name": "zizmor",
+                  "constraint": "=\u003e 1.4.1"
+                },
+                {
+                  "name": "gitlab-sarif-converter",
+                  "constraint": "\u003e= 0.0.0-0"
+                }
+              ],
               "network": [
                 {
                   "host": "github.com:443"
@@ -1360,39 +1554,45 @@
                 }
               ]
             },
-            "inputs": {
+            "inputs": {},
+            "outputs": {
               "artifacts": [
                 {
                   "type": "report",
                   "format": "sarif"
+                },
+                {
+                  "type": "report",
+                  "format": "gl-codequality"
                 }
               ]
             },
-            "outputs": {},
-            "order": 5
+            "order": 6
           },
           {
-            "id": "6",
+            "id": "7",
             "name": "changelog-generate",
             "slug": "changelog-generate",
             "stage": "publish",
             "scope": "project",
             "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+changelog-generate",
             "run-after": [
-              "github-sarif-upload",
               "gitleaks-scan",
               "go-build-github-com-cidverse-test-library-go-mod",
+              "go-lint-github-com-cidverse-test-library-go-mod",
               "go-test-github-com-cidverse-test-library-go-mod",
               "semgrep-scan",
-              "trivyfs-scan"
+              "trivyfs-scan",
+              "zizmor-scan"
             ],
             "run-after-by-name": [
-              "github-sarif-upload",
               "gitleaks-scan",
               "go-build [github.com/cidverse/test-library-go-mod]",
+              "go-lint [github.com/cidverse/test-library-go-mod]",
               "go-test [github.com/cidverse/test-library-go-mod]",
               "semgrep-scan",
-              "trivyfs-scan"
+              "trivyfs-scan",
+              "zizmor-scan"
             ],
             "access": {
               "network": [
@@ -1430,10 +1630,10 @@
                 }
               ]
             },
-            "order": 6
+            "order": 7
           },
           {
-            "id": "7",
+            "id": "8",
             "name": "github-release-publish",
             "slug": "github-release-publish",
             "stage": "publish",
@@ -1441,21 +1641,23 @@
             "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+github-release-publish",
             "run-after": [
               "changelog-generate",
-              "github-sarif-upload",
               "gitleaks-scan",
               "go-build-github-com-cidverse-test-library-go-mod",
+              "go-lint-github-com-cidverse-test-library-go-mod",
               "go-test-github-com-cidverse-test-library-go-mod",
               "semgrep-scan",
-              "trivyfs-scan"
+              "trivyfs-scan",
+              "zizmor-scan"
             ],
             "run-after-by-name": [
               "changelog-generate",
-              "github-sarif-upload",
               "gitleaks-scan",
               "go-build [github.com/cidverse/test-library-go-mod]",
+              "go-lint [github.com/cidverse/test-library-go-mod]",
               "go-test [github.com/cidverse/test-library-go-mod]",
               "semgrep-scan",
-              "trivyfs-scan"
+              "trivyfs-scan",
+              "zizmor-scan"
             ],
             "uses-output-of": [
               "changelog-generate",
@@ -1504,7 +1706,7 @@
               ]
             },
             "outputs": {},
-            "order": 7
+            "order": 8
           }
         ]
       },
@@ -1575,6 +1777,7 @@
         "stages": [
           "build",
           "test",
+          "lint",
           "scan"
         ],
         "steps": [
@@ -1584,7 +1787,7 @@
             "slug": "go-build-github-com-cidverse-test-library-go-mod",
             "stage": "build",
             "scope": "module",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+go-build",
+            "action": "builtin://actions/go-build",
             "module": "gomod-go-mod",
             "access": {
               "executables": [
@@ -1645,7 +1848,7 @@
             "slug": "go-test-github-com-cidverse-test-library-go-mod",
             "stage": "test",
             "scope": "module",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+go-test",
+            "action": "builtin://actions/go-test",
             "module": "gomod-go-mod",
             "access": {
               "executables": [
@@ -1719,15 +1922,16 @@
           },
           {
             "id": "2",
-            "name": "gitleaks-scan",
-            "slug": "gitleaks-scan",
-            "stage": "scan",
-            "scope": "project",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+gitleaks-scan",
+            "name": "go-lint [github.com/cidverse/test-library-go-mod]",
+            "slug": "go-lint-github-com-cidverse-test-library-go-mod",
+            "stage": "lint",
+            "scope": "module",
+            "action": "builtin://actions/go-lint",
+            "module": "gomod-go-mod",
             "access": {
               "executables": [
                 {
-                  "name": "gitleaks",
+                  "name": "golangci-lint",
                   "constraint": "\u003e= 0.0.0-0"
                 },
                 {
@@ -1779,11 +1983,71 @@
           },
           {
             "id": "3",
+            "name": "gitleaks-scan",
+            "slug": "gitleaks-scan",
+            "stage": "scan",
+            "scope": "project",
+            "action": "builtin://actions/gitleaks-scan",
+            "access": {
+              "executables": [
+                {
+                  "name": "gitleaks",
+                  "constraint": "\u003e= 0.0.0-0"
+                },
+                {
+                  "name": "gitlab-sarif-converter",
+                  "constraint": "\u003e= 0.0.0-0"
+                }
+              ],
+              "network": [
+                {
+                  "host": "github.com:443"
+                },
+                {
+                  "host": "api.github.com:443"
+                },
+                {
+                  "host": "codeload.github.com:443"
+                },
+                {
+                  "host": "uploads.github.com:443"
+                },
+                {
+                  "host": "objects.githubusercontent.com:443"
+                },
+                {
+                  "host": "raw.githubusercontent.com:443"
+                },
+                {
+                  "host": "ghcr.io:443"
+                },
+                {
+                  "host": "pkg-containers.githubusercontent.com:443"
+                }
+              ]
+            },
+            "inputs": {},
+            "outputs": {
+              "artifacts": [
+                {
+                  "type": "report",
+                  "format": "sarif"
+                },
+                {
+                  "type": "report",
+                  "format": "gl-codequality"
+                }
+              ]
+            },
+            "order": 3
+          },
+          {
+            "id": "4",
             "name": "semgrep-scan",
             "slug": "semgrep-scan",
             "stage": "scan",
             "scope": "project",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+semgrep-scan",
+            "action": "builtin://actions/semgrep-scan",
             "access": {
               "env": [
                 {
@@ -1849,15 +2113,15 @@
                 }
               ]
             },
-            "order": 3
+            "order": 4
           },
           {
-            "id": "4",
+            "id": "5",
             "name": "trivyfs-scan",
             "slug": "trivyfs-scan",
             "stage": "scan",
             "scope": "project",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+trivyfs-scan",
+            "action": "builtin://actions/trivyfs-scan",
             "access": {
               "executables": [
                 {
@@ -1912,36 +2176,36 @@
                 }
               ]
             },
-            "order": 4
+            "order": 5
           },
           {
-            "id": "5",
-            "name": "github-sarif-upload",
-            "slug": "github-sarif-upload",
+            "id": "6",
+            "name": "zizmor-scan",
+            "slug": "zizmor-scan",
             "stage": "scan",
             "scope": "project",
-            "action": "container://ghcr.io/cidverse/cid-actions-go:0.1.0+github-sarif-upload",
-            "run-after": [
-              "gitleaks-scan",
-              "semgrep-scan",
-              "trivyfs-scan"
-            ],
-            "run-after-by-name": [
-              "gitleaks-scan",
-              "semgrep-scan",
-              "trivyfs-scan"
-            ],
-            "uses-output-of": [
-              "gitleaks-scan",
-              "semgrep-scan",
-              "trivyfs-scan"
-            ],
-            "uses-output-of-by-name": [
-              "gitleaks-scan",
-              "semgrep-scan",
-              "trivyfs-scan"
-            ],
+            "action": "builtin://actions/zizmor-scan",
             "access": {
+              "env": [
+                {
+                  "name": "GH_HOSTNAME",
+                  "description": "GH_HOSTNAME is required for some online audits"
+                },
+                {
+                  "name": "GH_TOKEN",
+                  "description": "GH_TOKEN is required for some online audits"
+                }
+              ],
+              "executables": [
+                {
+                  "name": "zizmor",
+                  "constraint": "=\u003e 1.4.1"
+                },
+                {
+                  "name": "gitlab-sarif-converter",
+                  "constraint": "\u003e= 0.0.0-0"
+                }
+              ],
               "network": [
                 {
                   "host": "github.com:443"
@@ -1969,16 +2233,20 @@
                 }
               ]
             },
-            "inputs": {
+            "inputs": {},
+            "outputs": {
               "artifacts": [
                 {
                   "type": "report",
                   "format": "sarif"
+                },
+                {
+                  "type": "report",
+                  "format": "gl-codequality"
                 }
               ]
             },
-            "outputs": {},
-            "order": 5
+            "order": 6
           }
         ]
       },
