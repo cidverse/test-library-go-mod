@@ -164,11 +164,11 @@
           },
           {
             "id": "2",
-            "name": "go-lint [github.com/cidverse/test-library-go-mod]",
-            "slug": "go-lint-github-com-cidverse-test-library-go-mod",
+            "name": "golangci-lint [github.com/cidverse/test-library-go-mod]",
+            "slug": "golangci-lint-github-com-cidverse-test-library-go-mod",
             "stage": "lint",
             "scope": "module",
-            "action": "builtin://actions/go-lint",
+            "action": "builtin://actions/golangci-lint",
             "module": "gomod-go-mod",
             "access": {
               "executables": [
@@ -701,11 +701,11 @@
           },
           {
             "id": "2",
-            "name": "go-lint [github.com/cidverse/test-library-go-mod]",
-            "slug": "go-lint-github-com-cidverse-test-library-go-mod",
+            "name": "golangci-lint [github.com/cidverse/test-library-go-mod]",
+            "slug": "golangci-lint-github-com-cidverse-test-library-go-mod",
             "stage": "lint",
             "scope": "module",
-            "action": "builtin://actions/go-lint",
+            "action": "builtin://actions/golangci-lint",
             "module": "gomod-go-mod",
             "access": {
               "executables": [
@@ -1243,11 +1243,11 @@
           },
           {
             "id": "2",
-            "name": "go-lint [github.com/cidverse/test-library-go-mod]",
-            "slug": "go-lint-github-com-cidverse-test-library-go-mod",
+            "name": "golangci-lint [github.com/cidverse/test-library-go-mod]",
+            "slug": "golangci-lint-github-com-cidverse-test-library-go-mod",
             "stage": "lint",
             "scope": "module",
-            "action": "builtin://actions/go-lint",
+            "action": "builtin://actions/golangci-lint",
             "module": "gomod-go-mod",
             "access": {
               "executables": [
@@ -1579,8 +1579,8 @@
             "run-after": [
               "gitleaks-scan",
               "go-build-github-com-cidverse-test-library-go-mod",
-              "go-lint-github-com-cidverse-test-library-go-mod",
               "go-test-github-com-cidverse-test-library-go-mod",
+              "golangci-lint-github-com-cidverse-test-library-go-mod",
               "semgrep-scan",
               "trivyfs-scan",
               "zizmor-scan"
@@ -1588,8 +1588,8 @@
             "run-after-by-name": [
               "gitleaks-scan",
               "go-build [github.com/cidverse/test-library-go-mod]",
-              "go-lint [github.com/cidverse/test-library-go-mod]",
               "go-test [github.com/cidverse/test-library-go-mod]",
+              "golangci-lint [github.com/cidverse/test-library-go-mod]",
               "semgrep-scan",
               "trivyfs-scan",
               "zizmor-scan"
@@ -1643,8 +1643,8 @@
               "changelog-generate",
               "gitleaks-scan",
               "go-build-github-com-cidverse-test-library-go-mod",
-              "go-lint-github-com-cidverse-test-library-go-mod",
               "go-test-github-com-cidverse-test-library-go-mod",
+              "golangci-lint-github-com-cidverse-test-library-go-mod",
               "semgrep-scan",
               "trivyfs-scan",
               "zizmor-scan"
@@ -1653,8 +1653,8 @@
               "changelog-generate",
               "gitleaks-scan",
               "go-build [github.com/cidverse/test-library-go-mod]",
-              "go-lint [github.com/cidverse/test-library-go-mod]",
               "go-test [github.com/cidverse/test-library-go-mod]",
+              "golangci-lint [github.com/cidverse/test-library-go-mod]",
               "semgrep-scan",
               "trivyfs-scan",
               "zizmor-scan"
@@ -1922,11 +1922,11 @@
           },
           {
             "id": "2",
-            "name": "go-lint [github.com/cidverse/test-library-go-mod]",
-            "slug": "go-lint-github-com-cidverse-test-library-go-mod",
+            "name": "golangci-lint [github.com/cidverse/test-library-go-mod]",
+            "slug": "golangci-lint-github-com-cidverse-test-library-go-mod",
             "stage": "lint",
             "scope": "module",
-            "action": "builtin://actions/go-lint",
+            "action": "builtin://actions/golangci-lint",
             "module": "gomod-go-mod",
             "access": {
               "executables": [
