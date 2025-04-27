@@ -163,9 +163,9 @@ jobs:
           if-no-files-found: ignore
           compression-level: 6
           include-hidden-files: true
-  # go-lint [github.com/cidverse/test-library-go-mod]
-  go-lint-github-com-cidverse-test-library-go-mod:
-    name: 'go-lint [github.com/cidverse/test-library-go-mod]'
+  # golangci-lint [github.com/cidverse/test-library-go-mod]
+  golangci-lint-github-com-cidverse-test-library-go-mod:
+    name: 'golangci-lint [github.com/cidverse/test-library-go-mod]'
     runs-on: ubuntu-24.04 # https://github.com/actions/runner-images
     permissions:
       id-token: write # provenance signing
@@ -195,18 +195,18 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Action - go-lint [github.com/cidverse/test-library-go-mod]
+      - name: Action - golangci-lint [github.com/cidverse/test-library-go-mod]
         env:
           CID_WORKFLOW: "${{ env.CID_WORKFLOW }}"
           CID_LOGLEVEL: "${{ env.CID_LOGLEVEL }}"
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: |
-          cid --log-level=${CID_LOGLEVEL:-info} plan execute --state-file ".cid/state-github.json" --state-wf-name "main" --step "go-lint-github-com-cidverse-test-library-go-mod"
+          cid --log-level=${CID_LOGLEVEL:-info} plan execute --state-file ".cid/state-github.json" --state-wf-name "main" --step "golangci-lint-github-com-cidverse-test-library-go-mod"
       - name: Upload Outputs
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: "go-lint-github-com-cidverse-test-library-go-mod-${{ github.run_id }}"
-          path: ".dist/go-lint-github-com-cidverse-test-library-go-mod/"
+          name: "golangci-lint-github-com-cidverse-test-library-go-mod-${{ github.run_id }}"
+          path: ".dist/golangci-lint-github-com-cidverse-test-library-go-mod/"
           retention-days: 1
           if-no-files-found: ignore
           compression-level: 6
